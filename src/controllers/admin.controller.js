@@ -41,9 +41,9 @@ const adminLogin = asyncHandler(async (req, res, next) => {
 
 // Check if Admin is Logged In
 const adminLoggedIn = asyncHandler(async (req, res, next) => {
-      const { adminToken } = req.cookies;
+    const { adminToken } = req.cookies;
 
-    console.log(adminToken)
+    console.log("admin token " + adminToken)
 
     if (!adminToken) {
         throw new apiError(401, "Not authenticated");
@@ -54,9 +54,7 @@ const adminLoggedIn = asyncHandler(async (req, res, next) => {
 
         console.log(decoded)
 
-        const user = await Admin.findById(decoded._id).select("-password");
-
-        console.log(user)
+        const user = await Admin.findById(decoded.id).select("-password");
 
         if (!user) {
             throw new apiError(401, "User not found");
@@ -87,6 +85,45 @@ const adminLogout = asyncHandler(async (req, res, next) => {
   res.status(200).json(new ApiResponse(200, {}, "Admin logged out successfully."));
 });
 
+const adminRegister = asyncHandler(async(req,res,next)=>{
+    const {email, password} = req.body; 
 
 
-export { adminLogin, adminLoggedIn, getAllClaims , adminLogout};
+    // console.log(req.body)
+    // console.log(!fullName, !email, !password, !confirmPassword, !department, !designation, !employeeId, !scopusId, !vidhwanId, !googleScholarId, !bankAccount, !ifsc, !branch, !orcidId, )
+
+    if (!email ||!password ) {
+        throw new apiError(400 , "All fields are required")
+    }
+
+    const ExisitingUser = await Admin.findOne({email : email.trim()})
+    if(ExisitingUser){
+        throw new apiError(400 , "Admin already exists")
+    }
+
+    const user = await Admin.create(
+        {
+            email , password 
+        }
+    )
+
+    const token = jwt.sign({ id: admin._id, role: "admin" }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+   
+    console.log("new user registered")
+    console.log(user)
+
+    const options = {
+        httpOnly : true ,
+        secure : true,
+        sameSite: 'None'
+    }
+
+    res.status(200)
+        .cookie("adminToken" , token , options)
+        .json(new ApiResponse(200 , {admin : admin} , "Signed up"))
+})
+
+
+export { adminLogin, adminLoggedIn, getAllClaims , adminLogout , adminRegister};
