@@ -38,14 +38,41 @@ const adminLogin = asyncHandler(async (req, res, next) => {
 
 // Check if Admin is Logged In
 const adminLoggedIn = asyncHandler(async (req, res, next) => {
-  res.status(200).json(new ApiResponse(200, { admin: req.user }, "Admin is logged in."));
+      const { adminToken } = req.cookies;
+
+    console.log(adminToken)
+
+    if (!adminToken) {
+        throw new apiError(401, "Not authenticated");
+    }
+
+    try {
+        const decoded = jwt.verify(adminToken, process.env.JWT_SECRET);
+
+        console.log(decoded)
+
+        const user = await Admin.findById(decoded._id).select("-password");
+
+        console.log(user)
+
+        if (!user) {
+            throw new apiError(401, "User not found");
+        }
+
+        res.status(200).json(new ApiResponse(200, { user }, "User is logged in"));
+    } catch (err) {
+        console.log(err)
+        throw new apiError(401, "Invalid or expired token");
+    }
 });
 
 // Get All Claims (Admin Only)
 const getAllClaims = asyncHandler(async (req, res, next) => {
-  const claims = await Claim.find();
+  const claims = await Claim.find().populate("user", "name"); // Fetch user details
+
   res.status(200).json(new ApiResponse(200, claims, "All claims retrieved successfully."));
 });
+
 
 const adminLogout = asyncHandler(async (req, res, next) => {
   res.clearCookie("adminToken", {
