@@ -25,15 +25,18 @@ const adminLogin = asyncHandler(async (req, res, next) => {
     expiresIn: "1d",
   });
 
-  // Set token in HTTP-only cookie
-  res.cookie("adminToken", token, {
-    httpOnly: true, // Prevents client-side access
-    secure: process.env.NODE_ENV === "production", // Secure in production
-    sameSite: "strict",
-    maxAge: 24 * 60 * 60 * 1000, // 1 day
-  });
 
-  res.status(200).json(new ApiResponse(200, { token }, "Admin logged in successfully."));
+
+    const options = {
+      httpOnly : true ,
+      secure : true,
+      sameSite: 'None'
+    }
+
+
+  res.status(200)
+    .cookie("adminToken" , adminToken , options)
+    .json(new ApiResponse(200, { token }, "Admin logged in successfully."));
 });
 
 // Check if Admin is Logged In
