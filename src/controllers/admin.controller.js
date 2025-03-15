@@ -25,16 +25,18 @@ const adminLogin = asyncHandler(async (req, res, next) => {
 
   // Generate JWT token
   const token = jwt.sign({ id: admin._id, role: "admin" }, process.env.JWT_SECRET, {
-    expiresIn: "1d",
+    expiresIn: "3d",
   });
 
 
 
-    const options = {
-      httpOnly : true ,
-      secure : true,
-      sameSite: 'None'
-    }
+  const options = {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'None',
+    maxAge: 10 * 24 * 60 * 60 * 1000 // 3 days in milliseconds
+  };
+
 
 
   res.status(200)
@@ -63,7 +65,21 @@ const adminLoggedIn = asyncHandler(async (req, res, next) => {
             throw new apiError(401, "User not found");
         }
 
-        res.status(200).json(new ApiResponse(200, { user }, "User is logged in"));
+        const token = jwt.sign({ id: user._id, role: "admin" }, process.env.JWT_SECRET, {
+          expiresIn: "10d",
+        });
+
+        const options = {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'None',
+          maxAge: 10 * 24 * 60 * 60 * 1000 // 3 days in milliseconds
+        };
+
+
+        res.status(200)
+          .cookie("adminToken" , token , options)  
+          .json(new ApiResponse(200, { user }, "User is logged in"));
     } catch (err) {
         console.log(err)
         throw new apiError(401, "Invalid or expired token");

@@ -43,11 +43,12 @@ const UserLogin = asyncHandler(async (req, res) => {
     // Generate access token
     const accessToken = await generateAT(user._id);
 
-    const options = {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'None'
-    };
+        const options = {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'None',
+          maxAge: 10 * 24 * 60 * 60 * 1000 // 3 days in milliseconds
+        };
 
     // Send response with access token
     res.status(200)
@@ -84,10 +85,11 @@ const UserRegister = asyncHandler(async(req,res)=>{
     console.log(user)
 
     const options = {
-        httpOnly : true ,
-        secure : true,
-        sameSite: 'None'
-    }
+        httpOnly: true,
+        secure: true,
+        sameSite: 'None',
+        maxAge: 10 * 24 * 60 * 60 * 1000 // 3 days in milliseconds
+    };
 
     res.status(200)
         .cookie("accessToken" , accessToken , options)
