@@ -71,7 +71,7 @@ const adminLoggedIn = asyncHandler(async (req, res, next) => {
 
 // Get All Claims (Admin Only)
 const getAllClaims = asyncHandler(async (req, res, next) => {
-  const claims = await Claim.find().populate("user", "name"); // Fetch user details
+  const claims = await Claim.find().populate("user", "fullName"); // Fetch user details
 
   res.status(200).json(new ApiResponse(200, claims, "All claims retrieved successfully."));
 });
@@ -128,7 +128,7 @@ const adminRegister = asyncHandler(async(req,res,next)=>{
 })
 
 const adminGetUsers = asyncHandler(async(req,res,next)=>{
-  const users = await User.find()
+  const users = await User.find().populate("claims")
 
   res.status(200).json(new ApiResponse(200 ,users , "got all users" ))
 })
