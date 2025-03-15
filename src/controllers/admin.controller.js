@@ -6,6 +6,7 @@ import apiError from "../utils/apiError.js";
 import ApiResponse from "../utils/apiResponse.js";
 import dotenv from "dotenv";
 import User from "../models/user.model.js"
+import mongoose from "mongoose";
 // import User from "../models/user.model.js";
 
 dotenv.config();
@@ -133,5 +134,36 @@ const adminGetUsers = asyncHandler(async(req,res,next)=>{
   res.status(200).json(new ApiResponse(200 ,users , "got all users" ))
 })
 
+const getUserClaims = asyncHandler(async (req, res, next) => {
+  const userId = req.params.userId;
+  
+  // Validate userId format (assuming MongoDB ObjectId)
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json(
+      new ApiResponse(400, null, "Invalid user ID format.")
+    );
+  }
 
-export { adminLogin, adminLoggedIn, getAllClaims , adminLogout , adminRegister , adminGetUsers};
+  try {
+    // Find all claims for the specified user
+    const claims = await Claim.find({ user: userId })
+      .populate("user", "fullName email")
+      .sort({ createdAt: -1 }); // Sort by newest first
+    
+    // Check if any claims were found
+    if (!claims || claims.length === 0) {
+      return res.status(200).json(
+        new ApiResponse(200, { claims: [] }, "No claims found for this user.")
+      );
+    }
+    
+    res.status(200).json(
+      new ApiResponse(200, { claims }, "User claims retrieved successfully.")
+    );
+  } catch (error) {
+    console.error("Error fetching user claims:", error);
+    return next(new ApiError(500, "Failed to fetch user claims"));
+  }
+});
+
+export { adminLogin, adminLoggedIn, getAllClaims , adminLogout , adminRegister , adminGetUsers , getUserClaims};
