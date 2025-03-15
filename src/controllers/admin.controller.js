@@ -5,6 +5,8 @@ import Claim from "../models/claim.model.js"; // Assuming claims are stored in a
 import apiError from "../utils/apiError.js";
 import ApiResponse from "../utils/apiResponse.js";
 import dotenv from "dotenv";
+import User from "../models/user.model.js"
+// import User from "../models/user.model.js";
 
 dotenv.config();
 
@@ -122,8 +124,14 @@ const adminRegister = asyncHandler(async(req,res,next)=>{
 
     res.status(200)
         .cookie("adminToken" , token , options)
-        .json(new ApiResponse(200 , {admin : admin} , "Signed up"))
+        .json(new ApiResponse(200 , user , "Signed up"))
+})
+
+const adminGetUsers = asyncHandler(async(req,res,next)=>{
+  const users = await User.find()
+
+  res.status(200).json(new ApiResponse(200 ,users , "got all users" ))
 })
 
 
-export { adminLogin, adminLoggedIn, getAllClaims , adminLogout , adminRegister};
+export { adminLogin, adminLoggedIn, getAllClaims , adminLogout , adminRegister , adminGetUsers};
