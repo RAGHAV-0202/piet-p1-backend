@@ -229,6 +229,7 @@ const getCustomClaims = asyncHandler(async (req, res, next) => {
   res.status(200).json(new ApiResponse(200, claims, "Filtered claims retrieved successfully."));
 });
 
+
 const updateStatus = asyncHandler(async(req,res,next)=>{
   const {_id} = req.body ;
 
