@@ -86,29 +86,6 @@ const adminLoggedIn = asyncHandler(async (req, res, next) => {
     }
 });
 
-// Get All Claims (Admin Only)
-const getAllClaims = asyncHandler(async (req, res, next) => {
-  const claims = await Claim.find().populate("user", "fullName"); // Fetch user details
-
-  res.status(200).json(new ApiResponse(200, claims, "All claims retrieved successfully."));
-});
-
-const getDeptClaims = asyncHandler(async(req, res, next) => { 
-  const { department } = req.body;
-  
-  const departmentUsers = await User.find({ department: department });
-  
-  if (!departmentUsers.length) {
-    return res.status(404).json(new ApiResponse(404, null, "No users found with the specified department."));
-  }
-  
-  const userIds = departmentUsers.map(user => user._id);
-  
-  const claims = await Claim.find({ user: { $in: userIds } })
-                           .populate("user", "fullName email department");
- 
-  res.status(200).json(new ApiResponse(200, claims, "All department claims retrieved successfully.")); 
-});
 
 const adminLogout = asyncHandler(async (req, res, next) => {
   res.clearCookie("adminToken", {
@@ -160,6 +137,31 @@ const adminRegister = asyncHandler(async(req,res,next)=>{
         .json(new ApiResponse(200 , user , "Signed up"))
 })
 
+// Get All Claims (Admin Only)
+const getAllClaims = asyncHandler(async (req, res, next) => {
+  const claims = await Claim.find().populate("user", "fullName"); // Fetch user details
+
+  res.status(200).json(new ApiResponse(200, claims, "All claims retrieved successfully."));
+});
+
+const getDeptClaims = asyncHandler(async(req, res, next) => { 
+  const { department } = req.body;
+  
+  const departmentUsers = await User.find({ department: department });
+  
+  if (!departmentUsers.length) {
+    return res.status(404).json(new ApiResponse(404, null, "No users found with the specified department."));
+  }
+  
+  const userIds = departmentUsers.map(user => user._id);
+  
+  const claims = await Claim.find({ user: { $in: userIds } })
+                           .populate("user", "fullName email department");
+ 
+  res.status(200).json(new ApiResponse(200, claims, "All department claims retrieved successfully.")); 
+});
+
+
 const adminGetUsers = asyncHandler(async(req,res,next)=>{
   const users = await User.find().populate("claims")
 
@@ -198,4 +200,37 @@ const getUserClaims = asyncHandler(async (req, res, next) => {
   }
 });
 
-export { adminLogin, adminLoggedIn, getAllClaims , adminLogout , adminRegister , adminGetUsers , getUserClaims , getDeptClaims};
+const updateStatus = asyncHandler(async(req,res,next)=>{
+  const {_id} = req.body ;
+
+  await Claim.findByIdAndUpdate(_id , {status : "Processed"})
+  res.status(200).json(new ApiResponse(200 , "Updated" , "Updated Status Successfully"))
+})
+
+const deleteClaim = asyncHandler(async(req, res, next) => {
+  const { _id } = req.body;
+  
+  // First find the claim to get the user ID
+  const claim = await Claim.findById(_id);
+  
+  if (!claim) {
+    return res.status(404).json(new ApiResponse(404, null, "Claim not found."));
+  }
+  
+  // Delete the claim
+  const deleteResult = await Claim.deleteOne({ _id: _id });
+  
+  if (deleteResult.deletedCount === 0) {
+    return res.status(500).json(new ApiResponse(500, null, "Failed to delete claim."));
+  }
+  
+  // Remove claim reference from the user's claims array
+  await User.updateOne(
+    { _id: claim.user },
+    { $pull: { claims: _id } }
+  );
+  
+  res.status(200).json(new ApiResponse(200, deleteResult, "Claim deleted successfully."));
+});
+
+export { adminLogin, adminLoggedIn, getAllClaims , adminLogout , adminRegister , adminGetUsers , getUserClaims , getDeptClaims , deleteClaim , updateStatus };
