@@ -139,7 +139,8 @@ const adminRegister = asyncHandler(async(req,res,next)=>{
 
 // Get All Claims (Admin Only)
 const getAllClaims = asyncHandler(async (req, res, next) => {
-  const claims = await Claim.find().populate("user", "fullName"); // Fetch user details
+  const claims = await Claim.find()
+    .populate("user", "fullName email department"); // Added department to the populated fields
 
   res.status(200).json(new ApiResponse(200, claims, "All claims retrieved successfully."));
 });
@@ -182,8 +183,6 @@ const getUserClaims = asyncHandler(async (req, res, next) => {
     return next(new ApiError(500, "Failed to fetch user claims"));
   }
 });
-
-
 
 
 const getDeptClaims = asyncHandler(async(req, res, next) => { 
