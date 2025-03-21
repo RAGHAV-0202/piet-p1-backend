@@ -204,30 +204,48 @@ const getDeptClaims = asyncHandler(async(req, res, next) => {
 
 
 const getCustomClaims = asyncHandler(async (req, res, next) => {
-  const { department, status } = req.body;
+  try {
+    const { department, status } = req.body;
+    let filters = {};
 
-  const filters = {};
-
-  if (department && department !== 'ALL') {
-    const departmentUsers = await User.find({ department });
-
-    if (!departmentUsers.length) {
-      return res.status(404).json(new ApiResponse(404, null, "No users found with the specified department."));
+    // Handle department filter
+    if (department && department !== 'ALL') {
+      // Find users with the specified department
+      const departmentUsers = await User.find({ department });
+      
+      if (!departmentUsers || departmentUsers.length === 0) {
+        return res.status(200).json(new ApiResponse(200, [], `No users found in the ${department} department.`));
+      }
+      
+      // Extract user IDs for filtering claims
+      const userIds = departmentUsers.map(user => user._id);
+      filters.user = { $in: userIds };
     }
 
-    const userIds = departmentUsers.map(user => user._id);
-    filters.user = { $in: userIds };
+    // Handle status filter
+    if (status && status !== 'ALL') {
+      filters.status = status;
+    }
+
+    // Fetch claims with filters and populate user details
+    const claims = await Claim.find(filters)
+      .populate("user", "fullName email department")
+      .sort({ createdAt: -1 }); // Sort by newest first
+
+    return res.status(200).json(new ApiResponse(
+      200, 
+      claims, 
+      `Retrieved ${claims.length} claim(s) successfully.`
+    ));
+  } catch (error) {
+    console.error("Error in getCustomClaims:", error);
+    return res.status(500).json(new ApiResponse(
+      500,
+      null,
+      "An error occurred while retrieving claims. Please try again."
+    ));
   }
-
-  if (status && status !== 'ALL') {
-    filters.status = status;
-  }
-
-  const claims = await Claim.find(filters).populate("user", "fullName email department");
-
-  res.status(200).json(new ApiResponse(200, claims, "Filtered claims retrieved successfully."));
 });
-
 
 const updateStatus = asyncHandler(async(req,res,next)=>{
   const {_id} = req.body ;
