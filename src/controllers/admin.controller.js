@@ -205,7 +205,7 @@ const getDeptClaims = asyncHandler(async(req, res, next) => {
 
 
 const getCustomClaims = asyncHandler(async (req, res, next) => {
-  const { department, status } = req.query;
+  const { department, status } = req.body;
 
   const filters = {};
 
@@ -220,7 +220,7 @@ const getCustomClaims = asyncHandler(async (req, res, next) => {
     filters.user = { $in: userIds };
   }
 
-  if (status) {
+  if (status && status !== 'ALL') {
     filters.status = status;
   }
 
@@ -228,7 +228,6 @@ const getCustomClaims = asyncHandler(async (req, res, next) => {
 
   res.status(200).json(new ApiResponse(200, claims, "Filtered claims retrieved successfully."));
 });
-
 
 const updateStatus = asyncHandler(async(req,res,next)=>{
   const {_id} = req.body ;
