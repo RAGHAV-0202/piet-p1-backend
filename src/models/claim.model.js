@@ -14,6 +14,10 @@ const claimSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    category : {
+        type: [String],
+        required: true  
+    },
     authors: {
         type: [String],
         required: true

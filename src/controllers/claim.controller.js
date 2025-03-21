@@ -44,6 +44,7 @@ export const createClaim = asyncHandler(async (req, res) => {
         publicationDate: req.body.publicationDate,
         webLink: req.body.webLink,
         venue: req.body.venue,
+        category : req.body.category,
         calculatedAmount: req.body.calculatedAmount,
         totalAmount: req.body.totalAmount,
         paperFront: paperFrontUrl,
