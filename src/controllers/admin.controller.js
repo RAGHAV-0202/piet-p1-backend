@@ -93,6 +93,22 @@ const getAllClaims = asyncHandler(async (req, res, next) => {
   res.status(200).json(new ApiResponse(200, claims, "All claims retrieved successfully."));
 });
 
+const getDeptClaims = asyncHandler(async(req, res, next) => { 
+  const { department } = req.body;
+  
+  const departmentUsers = await User.find({ department: department });
+  
+  if (!departmentUsers.length) {
+    return res.status(404).json(new ApiResponse(404, null, "No users found with the specified department."));
+  }
+  
+  const userIds = departmentUsers.map(user => user._id);
+  
+  const claims = await Claim.find({ user: { $in: userIds } })
+                           .populate("user", "fullName email department");
+ 
+  res.status(200).json(new ApiResponse(200, claims, "All department claims retrieved successfully.")); 
+});
 
 const adminLogout = asyncHandler(async (req, res, next) => {
   res.clearCookie("adminToken", {
@@ -182,4 +198,4 @@ const getUserClaims = asyncHandler(async (req, res, next) => {
   }
 });
 
-export { adminLogin, adminLoggedIn, getAllClaims , adminLogout , adminRegister , adminGetUsers , getUserClaims};
+export { adminLogin, adminLoggedIn, getAllClaims , adminLogout , adminRegister , adminGetUsers , getUserClaims , getDeptClaims};

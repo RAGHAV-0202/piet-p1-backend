@@ -34,9 +34,24 @@ const claimSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    totalAmount : {
+        type: Number,
+        // required: true
+    },
+    status : {
+        type : String , 
+        default : "Submitted" , 
+        enum: ["Submitted", "Processed"]
+    },
     paperFront: { type: String, required: true },
     claimProof: { type: String, required: true }  
 }, { timestamps: true });
+
+claimSchema.pre("save", function (next) {
+  this.totalAmount = this.calculatedAmount * this.numberOfAuthors;
+  console.log(this.totalAmount)
+  next();
+});
 
 const Claim = mongoose.model("Claim", claimSchema);
 export default Claim;
