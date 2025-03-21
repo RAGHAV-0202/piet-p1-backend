@@ -47,11 +47,11 @@ const claimSchema = new mongoose.Schema({
     claimProof: { type: String, required: true }  
 }, { timestamps: true });
 
-claimSchema.pre("save", function (next) {
-  this.totalAmount = this.calculatedAmount * this.numberOfAuthors;
-  console.log(this.totalAmount)
-  next();
-});
+// claimSchema.pre("save", function (next) {
+//   this.totalAmount = this.calculatedAmount * this.numberOfAuthors;
+//   console.log(this.totalAmount)
+//   next();
+// });
 
 const Claim = mongoose.model("Claim", claimSchema);
 export default Claim;
