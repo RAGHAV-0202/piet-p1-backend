@@ -144,23 +144,6 @@ const getAllClaims = asyncHandler(async (req, res, next) => {
   res.status(200).json(new ApiResponse(200, claims, "All claims retrieved successfully."));
 });
 
-const getDeptClaims = asyncHandler(async(req, res, next) => { 
-  const { department } = req.body;
-  
-  const departmentUsers = await User.find({ department: department });
-  
-  if (!departmentUsers.length) {
-    return res.status(404).json(new ApiResponse(404, null, "No users found with the specified department."));
-  }
-  
-  const userIds = departmentUsers.map(user => user._id);
-  
-  const claims = await Claim.find({ user: { $in: userIds } })
-                           .populate("user", "fullName email department");
- 
-  res.status(200).json(new ApiResponse(200, claims, "All department claims retrieved successfully.")); 
-});
-
 
 const adminGetUsers = asyncHandler(async(req,res,next)=>{
   const users = await User.find().populate("claims")
@@ -200,12 +183,59 @@ const getUserClaims = asyncHandler(async (req, res, next) => {
   }
 });
 
+
+
+
+const getDeptClaims = asyncHandler(async(req, res, next) => { 
+  const { department } = req.body;
+  
+  const departmentUsers = await User.find({ department: department });
+  
+  if (!departmentUsers.length) {
+    return res.status(404).json(new ApiResponse(404, null, "No users found with the specified department."));
+  }
+  
+  const userIds = departmentUsers.map(user => user._id);
+  
+  const claims = await Claim.find({ user: { $in: userIds } })
+                           .populate("user", "fullName email department");
+ 
+  res.status(200).json(new ApiResponse(200, claims, "All department claims retrieved successfully.")); 
+});
+
+
+const getCustomClaims = asyncHandler(async (req, res, next) => {
+  const { department, status } = req.body;
+
+  const filters = {};
+
+  if (department && department !== 'ALL') {
+    const departmentUsers = await User.find({ department });
+
+    if (!departmentUsers.length) {
+      return res.status(404).json(new ApiResponse(404, null, "No users found with the specified department."));
+    }
+
+    const userIds = departmentUsers.map(user => user._id);
+    filters.user = { $in: userIds };
+  }
+
+  if (status) {
+    filters.status = status;
+  }
+
+  const claims = await Claim.find(filters).populate("user", "fullName email department");
+
+  res.status(200).json(new ApiResponse(200, claims, "Filtered claims retrieved successfully."));
+});
+
 const updateStatus = asyncHandler(async(req,res,next)=>{
   const {_id} = req.body ;
 
   await Claim.findByIdAndUpdate(_id , {status : "Processed"})
   res.status(200).json(new ApiResponse(200 , "Updated" , "Updated Status Successfully"))
 })
+
 
 const deleteClaim = asyncHandler(async(req, res, next) => {
   const { _id } = req.body;
@@ -233,4 +263,4 @@ const deleteClaim = asyncHandler(async(req, res, next) => {
   res.status(200).json(new ApiResponse(200, deleteResult, "Claim deleted successfully."));
 });
 
-export { adminLogin, adminLoggedIn, getAllClaims , adminLogout , adminRegister , adminGetUsers , getUserClaims , getDeptClaims , deleteClaim , updateStatus };
+export { adminLogin, adminLoggedIn, getAllClaims , adminLogout , adminRegister , adminGetUsers , getUserClaims , getDeptClaims , deleteClaim , updateStatus , getCustomClaims };
