@@ -21,19 +21,55 @@ const uploadToCloudinary = (buffer, folder) => {
 
 // Create a new claim with Cloudinary file upload
 export const createClaim = asyncHandler(async (req, res) => {
-    if (!req.files || !req.files["paperFront"] || !req.files["claimProof"]) {
+    // Fix the logical condition - using && instead of || for the category check
+    if ((req.body.category !== "Professional Body Membership" && req.body.category !== "Conference") && 
+        (!req.files || !req.files["paperFront"] || !req.files["claimProof"])) {
         throw new apiError(400, "Missing required parameter - file");
     }
 
-    // Extract file buffers
-    const paperFrontBuffer = req.files["paperFront"][0].buffer;
-    const claimProofBuffer = req.files["claimProof"][0].buffer;
+    // For Conference category, check if claimProof is required but missing
+    if (req.body.category === "Conference" && (!req.files || !req.files["claimProof"])) {
+        throw new apiError(400, "Conference submission requires proof of claim");
+    }
 
-    // Upload both files in parallel
-    const [paperFrontUrl, claimProofUrl] = await Promise.all([
-        uploadToCloudinary(paperFrontBuffer, "claims"),
-        uploadToCloudinary(claimProofBuffer, "claims"),
-    ]);
+    var paperFrontUrl = "";
+    var claimProofUrl = "";
+
+    if (req.body.category === "Professional Body Membership") {
+        paperFrontUrl = "NA";
+        claimProofUrl = "NA";
+    } else if (req.body.category === "Conference") {
+        // For Conference, we only need claimProof
+        const claimProofBuffer = req.files["claimProof"][0].buffer;
+        claimProofUrl = await uploadToCloudinary(claimProofBuffer, "claims");
+        paperFrontUrl = "NA"; // No paper front for conference
+    } else {
+        // For all other categories, we need both files
+        const paperFrontBuffer = req.files["paperFront"][0].buffer;
+        const claimProofBuffer = req.files["claimProof"][0].buffer;
+
+        [paperFrontUrl, claimProofUrl] = await Promise.all([
+            uploadToCloudinary(paperFrontBuffer, "claims"),
+            uploadToCloudinary(claimProofBuffer, "claims"),
+        ]);
+    }
+
+    console.log(req.user._id);
+
+    console.log({
+        user: req.user._id,
+        title: req.body.title,
+        numberOfAuthors: req.body.numberOfAuthors,
+        authors: Array.isArray(req.body.authors) ? req.body.authors : JSON.parse(req.body.authors),
+        publicationDate: req.body.publicationDate,
+        webLink: req.body.webLink,
+        venue: req.body.venue,
+        category: req.body.category,
+        calculatedAmount: req.body.calculatedAmount,
+        totalAmount: req.body.totalAmount,
+        paperFront: paperFrontUrl,
+        claimProof: claimProofUrl,
+    });
 
     // Create claim in DB
     const claim = await Claim.create({
@@ -44,7 +80,7 @@ export const createClaim = asyncHandler(async (req, res) => {
         publicationDate: req.body.publicationDate,
         webLink: req.body.webLink,
         venue: req.body.venue,
-        category : req.body.category,
+        category: req.body.category,
         calculatedAmount: req.body.calculatedAmount,
         totalAmount: req.body.totalAmount,
         paperFront: paperFrontUrl,

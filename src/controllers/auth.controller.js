@@ -47,7 +47,7 @@ const UserLogin = asyncHandler(async (req, res) => {
           httpOnly: true,
           secure: true,
           sameSite: 'None',
-          maxAge: 10 * 24 * 60 * 60 * 1000 // 3 days in milliseconds
+          maxAge: 10 * 24 * 60 * 60 * 1000 // 10 days in milliseconds
         };
 
     // Send response with access token
@@ -88,7 +88,7 @@ const UserRegister = asyncHandler(async(req,res)=>{
         httpOnly: true,
         secure: true,
         sameSite: 'None',
-        maxAge: 10 * 24 * 60 * 60 * 1000 // 3 days in milliseconds
+        maxAge: 10 * 24 * 60 * 60 * 1000 // 10 days in milliseconds
     };
 
     res.status(200)
