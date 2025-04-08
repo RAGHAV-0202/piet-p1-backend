@@ -36,7 +36,7 @@ const claimSchema = new mongoose.Schema({
     },
     calculatedAmount: {
         type: Number,
-        required: true
+        // required: true
     },
     totalAmount : {
         type: Number,
@@ -47,8 +47,8 @@ const claimSchema = new mongoose.Schema({
         default : "Submitted" , 
         enum: ["Submitted", "Processed"]
     },
-    paperFront: { type: String, required: true },
-    claimProof: { type: String, required: true }  
+    paperFront: { type: String },
+    claimProof: { type: String }  
 }, { timestamps: true });
 
 // claimSchema.pre("save", function (next) {
