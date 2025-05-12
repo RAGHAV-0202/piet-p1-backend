@@ -20,7 +20,7 @@ const UserSchema = new mongoose.Schema({
     department: {
         type: String,
         required: [true, "Department is required"],
-        enum: ["CSE", "AIML", "AIDS", "CYS", "IT", "ME", "TEXTILE", "CIVIL"],
+        enum: ["CSE", "AIML", "AIDS", "CYS", "IT", "ME", "TEXTILE", "CIVIL" , "PHARMACY"],
     },
     designation : {
         type : String , 
