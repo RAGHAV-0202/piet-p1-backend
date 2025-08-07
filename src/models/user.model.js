@@ -20,7 +20,7 @@ const UserSchema = new mongoose.Schema({
     department: {
         type: String,
         required: [true, "Department is required"],
-        enum: ["CSE", "AIML", "AIDS", "CYS", "IT", "ME", "TEXTILE", "CIVIL" , "PHARMACY"],
+        enum: ["CSE", "AIML", "AIDS", "CYS", "IT", "ME", "TEXTILE", "CIVIL" , "PHARMACY" , "DCA"],
     },
     designation : {
         type : String , 
@@ -89,3 +89,4 @@ UserSchema.methods.generateAccessToken = async function(){
 
 const User = mongoose.model("User" , UserSchema)
 export default User
+
