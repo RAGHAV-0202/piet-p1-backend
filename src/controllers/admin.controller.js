@@ -140,7 +140,7 @@ const adminRegister = asyncHandler(async(req,res,next)=>{
 // Get All Claims (Admin Only)
 const getAllClaims = asyncHandler(async (req, res, next) => {
   const claims = await Claim.find()
-    .populate("user", "fullName email department"); // Added department to the populated fields
+    .populate("user", "fullName email department bankAccount employeeId ifsc designation branch"); // Added department to the populated fields
 
   res.status(200).json(new ApiResponse(200, claims, "All claims retrieved successfully."));
 });
@@ -282,3 +282,4 @@ const deleteClaim = asyncHandler(async(req, res, next) => {
 });
 
 export { adminLogin, adminLoggedIn, getAllClaims , adminLogout , adminRegister , adminGetUsers , getUserClaims , getDeptClaims , deleteClaim , updateStatus , getCustomClaims };
+
