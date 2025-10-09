@@ -1,5 +1,5 @@
 import express from "express";
-import { createClaim, myClaims, getClaimById } from "../controllers/claim.controller.js";
+import { createClaim, myClaims, getClaimById , deleteClaim } from "../controllers/claim.controller.js";
 import { VerifyJWT } from "../middleware/authMiddleware.js";
 // import upload from "../utils/multer.js";  // Import Multer setup
 import upload from "../middleware/multer.js";
@@ -13,5 +13,6 @@ router.post("/claim", VerifyJWT, upload.fields([
 
 router.get("/myClaims", VerifyJWT, myClaims);
 router.get("/claim/:id", VerifyJWT, getClaimById);
+router.post("/claim/:id" , VerifyJWT , deleteClaim)
 
 export default router;

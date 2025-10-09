@@ -104,3 +104,31 @@ export const getClaimById = asyncHandler(async (req, res) => {
     if (!claim) throw new apiError(404, "Claim not found.");
     res.status(200).json(new ApiResponse(200, claim, "Claim retrieved."));
 });
+
+
+export const deleteClaim = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json(new apiError(400, "Invalid claim ID"));
+  }
+
+  const claim = await Claim.findById(id);
+  if (!claim) {
+    return res.status(404).json(new apiError(404, "No claim found"));
+  }
+
+  const createdAt = new Date(claim.createdAt);
+  const now = new Date();
+  const diffInDays = (now - createdAt) / (1000 * 60 * 60 * 24);
+
+  if (diffInDays > 7) {
+    return res
+      .status(403)
+      .json(new apiError(403, "Claim can only be deleted within 7 days of creation"));
+  }
+
+  await Claim.findByIdAndDelete(id);
+
+  res.status(200).json(new ApiResponse(200, {}, "Claim deleted successfully"));
+});

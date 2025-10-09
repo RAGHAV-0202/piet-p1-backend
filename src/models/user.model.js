@@ -90,5 +90,3 @@ UserSchema.methods.generateAccessToken = async function(){
 
 const User = mongoose.model("User" , UserSchema)
 export default User
-
-

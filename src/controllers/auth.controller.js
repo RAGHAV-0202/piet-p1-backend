@@ -10,8 +10,6 @@ async function generateAT(userId){
     try{
         const user = await User.findById(userId)
         const accessToken = user.generateAccessToken();
-        
-        
         return accessToken
     }catch(Err){
         console.log(Err)
@@ -22,25 +20,19 @@ async function generateAT(userId){
 const UserLogin = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
-    // Check if email and password are provided
     if (!email || !password) {
         throw new apiError(400, "Email and password are required");
     }
 
-    // Find user by email
     const user = await User.findOne({ email: email.trim() }).select("+password");
 
     if (!user) {
         throw new apiError(400, "Invalid credentials");
     }
-
-    // Verify password
     const isPasswordValid = await user.isPasswordCorrect(password);
     if (!isPasswordValid) {
         throw new apiError(400, "Invalid credentials");
     }
-
-    // Generate access token
     const accessToken = await generateAT(user._id);
 
         const options = {
@@ -50,7 +42,6 @@ const UserLogin = asyncHandler(async (req, res) => {
           maxAge: 10 * 24 * 60 * 60 * 1000 // 10 days in milliseconds
         };
 
-    // Send response with access token
     res.status(200)
         .cookie("accessToken", accessToken, options)
         .json(new ApiResponse(200, { user }, "Signed In"));
