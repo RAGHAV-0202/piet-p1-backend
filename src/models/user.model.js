@@ -13,9 +13,10 @@ const UserSchema = new mongoose.Schema({
         type : String ,
         required : [true , "Full name is required"]
     },
-    password : {
-        type : String , 
-        required : [true , "Password is required"]   
+    password: {
+        type: String,
+        required: [true, "Password is required"],
+        minlength: [6, "Password must be at least 6 characters long"],
     },
     department: {
         type: String,
@@ -89,4 +90,5 @@ UserSchema.methods.generateAccessToken = async function(){
 
 const User = mongoose.model("User" , UserSchema)
 export default User
+
 
