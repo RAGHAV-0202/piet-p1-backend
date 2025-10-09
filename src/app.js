@@ -20,7 +20,7 @@ app.use(express.urlencoded({extended : true , limit : "16kb"}))
 app.use(cookieParser())
 
 const corsOptions = {
-    origin: ['http://localhost:3000' , "http://172.20.10.2:3000" , "http://192.168.29.76:3000" , "http://localhost:5173" , "https://piet-p1.vercel.app" , "http://192.168.29.76:5173"],
+    origin: ['http://localhost:3000' , "http://172.20.10.2:3000" , "http://192.168.29.76:3000" , "http://localhost:5173" , "https://piet-p1.vercel.app" , "http://192.168.29.76:5173" , "https://incentives.piet.co.in"],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
     credentials: true ,
@@ -74,5 +74,6 @@ app.get("*" , (req,res)=>{
         </body>
     `)
 })
+
 
 export {app}
