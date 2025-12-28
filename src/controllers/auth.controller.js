@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken"
 import dotenv from "dotenv"
 dotenv.config()
 import {sendMail} from "../utils/sendMail.js"
+import { accountCreationEmail } from "../utils/accountCreationEmail.js";
 
 async function generateAT(userId){
     try{
@@ -65,11 +66,27 @@ const UserRegister = asyncHandler(async(req,res)=>{
         throw new apiError(400 , "User already exists")
     }
 
-    const user = await User.create(
-        {
-            fullName , email , password , department , designation , employeeId , scopusId , vidhwanId, orcidId , bankAccount , ifsc , branch 
-        }
-    )
+    if (password !== confirmPassword) {
+        throw new apiError(400, "Passwords do not match");
+    }
+
+
+    const user = await User.create({
+        fullName,
+        email,
+        password,
+        department,
+        designation,
+        employeeId,
+        scopusId,
+        vidhwanId,
+        googleScholarId, 
+        orcidId,
+        bankAccount,
+        ifsc,
+        branch
+    });
+
 
     const {accessToken} = await generateAT(user._id);
    
@@ -83,9 +100,29 @@ const UserRegister = asyncHandler(async(req,res)=>{
         maxAge: 10 * 24 * 60 * 60 * 1000 // 10 days in milliseconds
     };
 
+    const htmlContent = accountCreationEmail({
+        fullName,
+        email,
+        employeeId,
+        department,
+        designation,
+        bankAccount,
+        ifsc
+    });
+
     res.status(200)
-        .cookie("accessToken" , accessToken , options)
-        .json(new ApiResponse(200 , {user : user} , "Signed up"))
+    .cookie("accessToken" , accessToken , options)
+    .json(new ApiResponse(200 , {user : user} , "Signed up"))
+
+    try {
+        await sendMail(
+            email,
+            "Account Created Successfully",
+            htmlContent
+        );
+    } catch (error) {
+        console.error("Email sending failed:", error.message);
+    }
 })
 
 const UserLogout = asyncHandler(async (req, res) => {
