@@ -46,7 +46,7 @@ const UserLogin = asyncHandler(async (req, res) => {
 
     res.status(200)
         .cookie("accessToken", accessToken, options)
-        .json(new ApiResponse(200, { user }, "Signed In"));
+        .json(new ApiResponse(200, { accessToken : accessToken }, "Signed In"));
 });
 
 
@@ -132,7 +132,12 @@ const UserLogout = asyncHandler(async (req, res) => {
 });
 
 const IsLoggedIn = asyncHandler(async (req, res) => {
-    const { accessToken } = req.cookies;
+        const authHeader = req.headers.authorization;
+
+    const accessToken =
+        authHeader && authHeader.startsWith("Bearer ")
+            ? authHeader.split(" ")[1]
+            : req.cookies?.accessToken;
 
     console.log(accessToken)
 

@@ -62,7 +62,10 @@ const UserSchema = new mongoose.Schema({
     claims: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "Claim"
-    }]  
+    }],
+    resetToken : {
+        type : String
+    }  
 
 
 } , {timestamps : true})

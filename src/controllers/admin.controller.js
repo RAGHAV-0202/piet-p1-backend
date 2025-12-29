@@ -282,4 +282,3 @@ const deleteClaim = asyncHandler(async(req, res, next) => {
 });
 
 export { adminLogin, adminLoggedIn, getAllClaims , adminLogout , adminRegister , adminGetUsers , getUserClaims , getDeptClaims , deleteClaim , updateStatus , getCustomClaims };
-
