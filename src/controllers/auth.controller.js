@@ -227,7 +227,12 @@ const UserPasswordResetRequest = asyncHandler(async (req, res) => {
     </div>
     `;
 
-    await sendMail(email, htmlContent);
+    await sendMail(
+        email,
+        "Password Reset Request",
+        htmlContent
+    );
+
 
     res.status(200).json(
         new ApiResponse(200, null, "If the email exists, a reset link has been sent")
