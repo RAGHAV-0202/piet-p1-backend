@@ -190,6 +190,8 @@ const UserPasswordResetRequest = asyncHandler(async (req, res) => {
     user.resetToken = token;
     user.resetTokenExpiry = Date.now() + 15 * 60 * 1000;
 
+    await user.save({ validateBeforeSave: false });
+
     const link = `${process.env.BASE_URL}/${token}`;
     console.log("Reset Link:", link);
 
@@ -233,6 +235,7 @@ const UserPasswordResetRequest = asyncHandler(async (req, res) => {
         htmlContent
     );
 
+    console.log(token)
 
     res.status(200).json(
         new ApiResponse(200, null, "If the email exists, a reset link has been sent")
@@ -243,6 +246,8 @@ const UserPasswordResetRequest = asyncHandler(async (req, res) => {
 const UserPasswordResetPage = asyncHandler(async (req, res) => {
     const { token } = req.params;
     const { password } = req.body;
+
+    console.log("reset password ")
 
     if (!token) {
         throw new apiError(400, "No token provided");
@@ -261,10 +266,14 @@ const UserPasswordResetPage = asyncHandler(async (req, res) => {
 
     const user = await User.findById(decoded._id);
 
+    console.log(user)
+
     if (!user) {
         throw new apiError(400, "Invalid token");
     }
 
+    console.log(token)
+    console.log(user.resetToken)
     if (user.resetToken !== token) {
         throw new apiError(400, "Reset link already used or invalid");
     }
