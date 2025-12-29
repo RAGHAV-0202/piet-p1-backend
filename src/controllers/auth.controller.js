@@ -165,79 +165,116 @@ const IsLoggedIn = asyncHandler(async (req, res) => {
     }
 });
 
-const UserPasswordResetRequest = asyncHandler(async(req,res)=>{
-    const {email} = req.body;
-    
-    if(!email){
-        throw new apiError(400 , "enter email");
-    }
-    
-    const user = User.findOne({email})
+const UserPasswordResetRequest = asyncHandler(async (req, res) => {
+    const { email } = req.body;
 
-    if(!user){
-        throw new apiError(400 , "User not found / invalid email id");
+    if (!email) {
+        throw new apiError(400, "Enter email");
+    }
+
+    const user = await User.findOne({ email });
+
+    // Prevent email enumeration
+    if (!user) {
+        return res.status(200).json(
+            new ApiResponse(200, null, "If the email exists, a reset link has been sent")
+        );
     }
 
     const token = jwt.sign(
-        {_id : user._id} ,
-        process.env.RESET_PASSWORD_SECRET , 
-        {expiresIn : process.env.RESET_PASSWORD_SECRET}
-    )
+        { _id: user._id },
+        process.env.RESET_PASSWORD_SECRET,
+        { expiresIn: "10m" }
+    );
 
-    user.resetToken = token 
-    await user.save();
+    user.resetToken = token;
+    user.resetTokenExpiry = Date.now() + 15 * 60 * 1000;
 
     const link = `${process.env.BASE_URL}/${token}`;
     console.log("Reset Link:", link);
 
     const htmlContent = `
-        <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; text-align: center;">
-            <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
-                <h1 style="color: #007bff;">Password Reset Request</h1>
-                <p style="font-size: 16px; color: #333;">We received a request to reset your password. Click the button below to reset your password.</p>
-                <a href="${link}" style="display: inline-block; background-color: #007bff; color: #ffffff; padding: 15px 25px; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold; margin-top: 20px;">Reset Password</a>
-                <p style="font-size: 14px; color: #555; margin-top: 20px;">If you did not request this password reset, please ignore this email.</p>
-                <p style="font-size: 12px; color: #aaa; margin-top: 20px;">Don't share this link with anyone else. This link will expire in 15 minutes.</p>
-            </div>
+    <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; text-align: center;">
+        <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+            <h1 style="color: #007bff;">Password Reset Request</h1>
+            <p style="font-size: 16px; color: #333;">
+                We received a request to reset your password.
+                Click the button below to reset your password.
+            </p>
+
+            <a href="${link}"
+            style="display: inline-block;
+                    background-color: #007bff;
+                    color: #ffffff;
+                    padding: 15px 25px;
+                    text-decoration: none;
+                    border-radius: 4px;
+                    font-size: 16px;
+                    font-weight: bold;
+                    margin-top: 20px;">
+                Reset Password
+            </a>
+
+            <p style="font-size: 14px; color: #555; margin-top: 20px;">
+                If you did not request this password reset, please ignore this email.
+            </p>
+
+            <p style="font-size: 12px; color: #aaa; margin-top: 20px;">
+                Don't share this link with anyone else.
+                This link will expire in 15 minutes.
+            </p>
         </div>
+    </div>
     `;
 
-    await sendMail(email, "Reset Your Password", htmlContent);
+    await sendMail(email, htmlContent);
 
-    res.status(200).json(new ApiResponse(200, null, "Reset link sent successfully"));
+    res.status(200).json(
+        new ApiResponse(200, null, "If the email exists, a reset link has been sent")
+    );
+});
 
-})
 
-const UserPasswordResetPage = asyncHandler(asyncHandler(async(req,res)=>{
-    const token = req.params 
-    if(!token){
-        throw new apiError(400 , "no token present , Unauthorized access")
+const UserPasswordResetPage = asyncHandler(async (req, res) => {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!token) {
+        throw new apiError(400, "No token provided");
     }
 
-    const {password} = req.body
-    if(!password){
-        throw new apiError(400 , "Enter Password");
+    if (!password) {
+        throw new apiError(400, "Enter password");
     }
 
-    const decoded = jwt.verify(token , process.env.RESET_PASSWORD_SECRET)
-    if(!decoded){
-        throw new apiError(400 , "Invalid token or token expired")
+    let decoded;
+    try {
+        decoded = jwt.verify(token, process.env.RESET_PASSWORD_SECRET);
+    } catch (err) {
+        throw new apiError(400, "Reset link expired or invalid");
     }
 
-    const user = await User.findById(decoded._id).select("-password -refreshToken")
-    if(!user){
-        throw new apiError(400 , "invalid token or token expired")
-    }
-    if(user.resetToken !== token) {
-        throw new apiError(400 , "Reset Link has been used !!!")
+    const user = await User.findById(decoded._id);
+
+    if (!user) {
+        throw new apiError(400, "Invalid token");
     }
 
-    user.password = password
-    user.resetToken = ""
+    if (user.resetToken !== token) {
+        throw new apiError(400, "Reset link already used or invalid");
+    }
+
+    user.password = password; // relies on pre-save bcrypt hook
+    user.resetToken = undefined;
+    user.resetTokenExpiry = undefined;
+
     await user.save();
-    res.status(200).json(new ApiResponse(200 , "Password Updated"))
 
-}))
+    res.status(200).json(
+        new ApiResponse(200, null, "Password updated successfully")
+    );
+});
+
 
 
 export {UserLogin , UserRegister , UserLogout , IsLoggedIn , UserPasswordResetRequest  , UserPasswordResetPage}
