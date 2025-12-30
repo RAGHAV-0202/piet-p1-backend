@@ -54,7 +54,6 @@ const UserRegister = asyncHandler(async(req,res)=>{
     const {fullName, email, password, confirmPassword, department, designation, employeeId, scopusId, vidhwanId, googleScholarId, bankAccount, ifsc, branch, orcidId} = req.body; 
 
 
-    console.log(req.body)
     console.log(!fullName, !email, !password, !confirmPassword, !department, !designation, !employeeId, !scopusId, !vidhwanId, !googleScholarId, !bankAccount, !ifsc, !branch, !orcidId, )
 
     if (!fullName ||!email ||!password || !confirmPassword ||!department ||!designation ||!employeeId ||!scopusId ||!vidhwanId || !googleScholarId ||!bankAccount ||!ifsc ||!branch ||!orcidId) {

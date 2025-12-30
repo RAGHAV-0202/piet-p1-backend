@@ -5,7 +5,7 @@ import userController from "../controllers/user.controller.js";
 const Router = express.Router()
 
 Router.get("/profile", VerifyJWT, userController.GetProfile);
-
+Router.put("/update", VerifyJWT, userController.UpdateProfile);
 
 
 export default Router;

@@ -43,6 +43,10 @@ const UserSchema = new mongoose.Schema({
         type : String , 
         required : [true , "Orcid ID is required"]   
     },
+    googleScholarId : {
+        type : String , 
+        required : [true , "Google Scholar ID is required"]   
+    },
     bankAccount : {
         type : Number , 
         required : [true , "BankAccount is required"]   
