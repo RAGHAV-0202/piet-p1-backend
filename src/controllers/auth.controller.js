@@ -187,7 +187,7 @@ const UserPasswordResetRequest = asyncHandler(async (req, res) => {
     );
 
     user.resetToken = token;
-    user.resetTokenExpiry = Date.now() + 15 * 60 * 1000;
+    user.resetTokenExpiry = Date.now() + 30 * 60 * 1000;
 
     await user.save({ validateBeforeSave: false });
 
@@ -222,7 +222,7 @@ const UserPasswordResetRequest = asyncHandler(async (req, res) => {
 
             <p style="font-size: 12px; color: #aaa; margin-top: 20px;">
                 Don't share this link with anyone else.
-                This link will expire in 15 minutes.
+                This link will expire in 30 minutes.
             </p>
         </div>
     </div>
