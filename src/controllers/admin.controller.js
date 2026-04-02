@@ -46,13 +46,16 @@ const adminLogin = asyncHandler(async (req, res, next) => {
 
 // Check if Admin is Logged In
 const adminLoggedIn = asyncHandler(async (req, res, next) => {
-    const { adminToken } = req.cookies;
+    const adminToken = req.cookies?.adminToken || req.header("Authorization")?.replace("Bearer ", "");
+    console.log("admin token " + adminToken);
 
     console.log("admin token " + adminToken)
 
     if (!adminToken) {
         throw new apiError(401, "Not authenticated");
     }
+
+    
 
     try {
         const decoded = jwt.verify(adminToken, process.env.JWT_SECRET);
