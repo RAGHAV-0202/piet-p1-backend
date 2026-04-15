@@ -21,6 +21,18 @@ const uploadToCloudinary = (buffer, folder) => {
 
 // Create a new claim with Cloudinary file upload
 export const createClaim = asyncHandler(async (req, res) => {
+    // Duplicate claim detection - check before uploading files to save bandwidth
+    if (req.body.title && req.body.webLink && req.body.webLink !== "NA") {
+        const existingClaim = await Claim.findOne({
+            user: req.user._id,
+            title: req.body.title.trim(),
+            webLink: req.body.webLink.trim()
+        });
+        if (existingClaim) {
+            throw new apiError(409, "You have already submitted a claim with the same title and web link.");
+        }
+    }
+
     // Fix the logical condition - using && instead of || for the category check
     if ((req.body.category !== "Professional Body Membership" && req.body.category !== "Conference") && 
         (!req.files || !req.files["paperFront"] || !req.files["claimProof"])) {

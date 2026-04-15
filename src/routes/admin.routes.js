@@ -1,5 +1,5 @@
 import express from "express";
-import { adminLogin, adminLoggedIn, getAllClaims , adminLogout , adminRegister , adminGetUsers , getUserClaims , getDeptClaims , deleteClaim , updateStatus , getCustomClaims} from "../controllers/admin.controller.js";
+import { adminLogin, adminLoggedIn, getAllClaims , adminLogout , adminRegister , adminGetUsers , getUserClaims , getDeptClaims , deleteClaim , updateStatus , getCustomClaims , getDepartmentStats} from "../controllers/admin.controller.js";
 // import { adminAuth } from "../middlewares/adminAuth.js"; // Middleware for admin authentication
 import { adminAuth } from "../middleware/adminMiddleware.js";
 
@@ -17,5 +17,6 @@ router.get("/customClaims" , adminAuth , getCustomClaims)
 router.post("/logout", adminLogout);
 router.post("/register" , adminRegister) ;
 router.get('/users/:userId/claims', adminAuth ,getUserClaims);
+router.get('/departmentStats', adminAuth, getDepartmentStats);
 
 export default router;

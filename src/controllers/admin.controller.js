@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
 import asyncHandler from "../utils/asyncHandler.js";
 import Admin from "../models/admin.model.js";
-import Claim from "../models/claim.model.js"; // Assuming claims are stored in a Claim model
+import Claim from "../models/claim.model.js";
+import Notification from "../models/notification.model.js";
 import apiError from "../utils/apiError.js";
 import ApiResponse from "../utils/apiResponse.js";
 import dotenv from "dotenv";
@@ -253,7 +254,17 @@ const getCustomClaims = asyncHandler(async (req, res, next) => {
 const updateStatus = asyncHandler(async(req,res,next)=>{
   const {_id} = req.body ;
 
-  await Claim.findByIdAndUpdate(_id , {status : "Processed"})
+  const claim = await Claim.findByIdAndUpdate(_id , {status : "Processed"}, { new: true });
+  
+  // Auto-create notification for the user
+  if (claim) {
+    await Notification.create({
+      user: claim.user,
+      message: `Your claim "${claim.title}" has been processed.`,
+      claimId: claim._id
+    });
+  }
+
   res.status(200).json(new ApiResponse(200 , "Updated" , "Updated Status Successfully"))
 })
 
@@ -284,4 +295,39 @@ const deleteClaim = asyncHandler(async(req, res, next) => {
   res.status(200).json(new ApiResponse(200, deleteResult, "Claim deleted successfully."));
 });
 
-export { adminLogin, adminLoggedIn, getAllClaims , adminLogout , adminRegister , adminGetUsers , getUserClaims , getDeptClaims , deleteClaim , updateStatus , getCustomClaims };
+// Department-wise stats for admin leaderboard
+const getDepartmentStats = asyncHandler(async (req, res, next) => {
+  const stats = await Claim.aggregate([
+    {
+      $lookup: {
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "userInfo"
+      }
+    },
+    { $unwind: "$userInfo" },
+    {
+      $group: {
+        _id: "$userInfo.department",
+        totalClaims: { $sum: 1 },
+        totalAmount: { $sum: { $ifNull: ["$calculatedAmount", 0] } },
+        facultyIds: { $addToSet: "$user" }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        department: "$_id",
+        totalClaims: 1,
+        totalAmount: 1,
+        facultyCount: { $size: "$facultyIds" }
+      }
+    },
+    { $sort: { totalClaims: -1 } }
+  ]);
+
+  res.status(200).json(new ApiResponse(200, stats, "Department stats retrieved successfully."));
+});
+
+export { adminLogin, adminLoggedIn, getAllClaims , adminLogout , adminRegister , adminGetUsers , getUserClaims , getDeptClaims , deleteClaim , updateStatus , getCustomClaims , getDepartmentStats };
