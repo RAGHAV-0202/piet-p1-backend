@@ -5,6 +5,8 @@ import Admin from "../models/admin.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
+import jwt from "jsonwebtoken";
 import apiError from "../utils/apiError.js";
 import ApiResponse from "../utils/apiResponse.js";
 import mongoose from "mongoose";
@@ -103,4 +105,88 @@ const downloadServerBackup = asyncHandler(async (req, res) => {
     res.download(filePath);
 });
 
-export { generateBackup, listServerBackups, downloadServerBackup };
+// Minimal Base32 Decoder for TOTP secrets
+const base32Decode = (base32) => {
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+    let bits = 0;
+    let value = 0;
+    let index = 0;
+    const output = Buffer.alloc(Math.floor((base32.length * 5) / 8));
+
+    for (let i = 0; i < base32.length; i++) {
+        const val = alphabet.indexOf(base32[i].toUpperCase());
+        if (val === -1) continue;
+        value = (value << 5) | val;
+        bits += 5;
+        if (bits >= 8) {
+            output[index++] = (value >> (bits - 8)) & 0xFF;
+            bits -= 8;
+        }
+    }
+    return output;
+};
+
+// Pure Node.js TOTP Verification (RFC 6238)
+const verifyTOTP = (token, secret) => {
+    try {
+        const key = base32Decode(secret);
+        // Step period is 30 seconds
+        const counter = Math.floor(Date.now() / 1000 / 30);
+        
+        // We check current window and one window before/after to allow for minor time drift
+        for (let i = -1; i <= 1; i++) {
+            const checkCounter = BigInt(counter + i);
+            const buf = Buffer.alloc(8);
+            buf.writeBigInt64BE(checkCounter, 0);
+
+            const hmac = crypto.createHmac("sha1", key).update(buf).digest();
+            const offset = hmac[hmac.length - 1] & 0xf;
+            const code = ((hmac[offset] & 0x7f) << 24 |
+                         (hmac[offset + 1] & 0xff) << 16 |
+                         (hmac[offset + 2] & 0xff) << 8 |
+                         (hmac[offset + 3] & 0xff)) % 1000000;
+
+            if (code.toString().padStart(6, '0') === token) {
+                return true;
+            }
+        }
+        return false;
+    } catch (err) {
+        console.error("TOTP Verification Error:", err);
+        return false;
+    }
+};
+
+// Emergency login using Google Authenticator (TOTP)
+const emergencyLogin = asyncHandler(async (req, res) => {
+    const { pin } = req.body; // In TOTP mode, 'pin' is the 6-digit code
+    const TOTP_SECRET = process.env.EMERGENCY_TOTP_SECRET;
+
+    if (!TOTP_SECRET) {
+        throw new apiError(500, "Emergency TOTP Secret is not configured on the server.");
+    }
+
+    if (!verifyTOTP(pin, TOTP_SECRET)) {
+        throw new apiError(401, "Invalid Authenticator Code.");
+    }
+
+    // Generate a short-lived "Degraded" token
+    const token = jwt.sign(
+        { id: "emergency", role: "admin", isDegraded: true },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+    );
+
+    const options = {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'None',
+        maxAge: 1 * 60 * 60 * 1000 // 1 hour
+    };
+
+    res.status(200)
+        .cookie("adminToken", token, options)
+        .json(new ApiResponse(200, { token }, "Emergency access granted."));
+});
+
+export { generateBackup, listServerBackups, downloadServerBackup, emergencyLogin };
